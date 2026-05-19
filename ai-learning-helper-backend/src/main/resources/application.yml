@@ -1,0 +1,5 @@
+spring:
+  application:
+    name: ai-learning-helper-backend
+  profiles:
+    active: dev

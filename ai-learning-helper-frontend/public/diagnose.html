@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 学习助手 - 连接测试</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            max-width: 800px;
+            width: 100%;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .check-item {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .loading { background: #fff3cd; color: #856404; }
+        .info { background: #d1ecf1; color: #0c5460; }
+        
+        .btn-group {
+            margin-top: 30px;
+            text-align: center;
+        }
+        .btn {
+            display: inline-block;
+            padding: 12px 30px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            margin: 0 10px;
+            cursor: pointer;
+            border: none;
+            font-size: 16px;
+        }
+        .btn:hover { background: #5568d3; }
+        .btn-secondary { background: #6c757d; }
+        .btn-secondary:hover { background: #5a6268; }
+        
+        .log {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 AI 学习助手 - 系统诊断</h1>
+        
+        <div id="results"></div>
+        
+        <div class="btn-group">
+            <button class="btn" onclick="runTests()">🔄 重新测试</button>
+            <button class="btn btn-secondary" onclick="clearAndReload()">🗑️ 清除缓存并刷新</button>
+            <button class="btn btn-secondary" onclick="openApp()">🚀 打开应用</button>
+        </div>
+        
+        <div id="log" class="log" style="display:none;"></div>
+    </div>
+
+    <script>
+        const results = document.getElementById('results');
+        const log = document.getElementById('log');
+        let logs = [];
+        
+        function addLog(msg) {
+            logs.push(`[${new Date().toLocaleTimeString()}] ${msg}`);
+            log.style.display = 'block';
+            log.innerText = logs.join('\n');
+            log.scrollTop = log.scrollHeight;
+        }
+        
+        function showResult(message, type) {
+            results.innerHTML += `<div class="check-item ${type}">${message}</div>`;
+        }
+        
+        async function testBackend() {
+            showResult('🔄 正在测试后端连接...', 'loading');
+            addLog('开始测试后端 API...');
+            
+            try {
+                const response = await fetch('http://localhost:8080/api/user/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: 'test', password: 'test' })
+                });
+                
+                const data = await response.json();
+                addLog(`后端响应状态: ${response.status}`);
+                addLog(`后端响应数据: ${JSON.stringify(data)}`);
+                
+                if (response.ok || data.code) {
+                    showResult('✅ 后端 API 连接成功！服务正常运行', 'success');
+                    return true;
+                } else {
+                    showResult(`⚠️ 后端已启动但返回错误: ${data.message || '未知错误'}`, 'info');
+                    return true;
+                }
+            } catch (error) {
+                addLog(`连接失败: ${error.message}`);
+                showResult(`❌ 后端 API 无法访问: ${error.message}`, 'error');
+                showResult('💡 请确保后端服务已启动 (mvn spring-boot:run)', 'info');
+                return false;
+            }
+        }
+        
+        async function testFrontend() {
+            showResult('🔄 正在检查前端资源...', 'loading');
+            addLog('检查前端静态资源...');
+            
+            try {
+                const response = await fetch('/favicon.svg');
+                if (response.ok) {
+                    showResult('✅ 前端资源加载正常', 'success');
+                    addLog('前端资源检查通过');
+                    return true;
+                } else {
+                    showResult('⚠️ 前端资源加载异常', 'error');
+                    return false;
+                }
+            } catch (error) {
+                showResult('❌ 前端资源加载失败', 'error');
+                addLog(`前端资源检查失败: ${error.message}`);
+                return false;
+            }
+        }
+        
+        function checkLocalStorage() {
+            showResult('🔄 正在检查本地存储...', 'loading');
+            addLog('检查 localStorage...');
+            
+            const token = localStorage.getItem('token');
+            const userStorage = localStorage.getItem('user-storage');
+            
+            if (token) {
+                showResult('✅ 发现登录令牌 (您已登录)', 'success');
+                addLog(`Token 存在: ${token.substring(0, 20)}...`);
+            } else {
+                showResult('ℹ️ 未发现登录令牌 (您需要登录)', 'info');
+                addLog('未登录，这是正常现象');
+            }
+            
+            if (userStorage) {
+                addLog('用户信息存在');
+            }
+        }
+        
+        function clearAndReload() {
+            addLog('清除本地存储...');
+            localStorage.clear();
+            sessionStorage.clear();
+            addLog('刷新页面...');
+            location.reload();
+        }
+        
+        function openApp() {
+            window.location.href = '/';
+        }
+        
+        async function runTests() {
+            results.innerHTML = '';
+            logs = [];
+            log.style.display = 'none';
+            
+            addLog('=== 开始系统诊断 ===\n');
+            
+            await testFrontend();
+            await testBackend();
+            checkLocalStorage();
+            
+            addLog('\n=== 诊断完成 ===');
+            
+            showResult('💡 如果所有检查都通过，请尝试清除缓存并刷新', 'info');
+            showResult('💡 如果后端无法访问，请先启动后端服务', 'info');
+        }
+        
+        window.onload = runTests;
+    </script>
+</body>
+</html>
