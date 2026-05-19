@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Card, Row, Col, Statistic, List, Button, message, Tag } from 'antd'
+import { Card, Row, Col, Statistic, List, Button } from 'antd'
 import {
   FileTextOutlined,
   CalendarOutlined,
@@ -9,6 +9,7 @@ import {
 import { useNavigate } from 'react-router-dom'
 import { materialApi, planApi, checkinApi } from '../../services/api'
 import type { StudyMaterialVO, StudyPlanVO, StudyCheckinVO } from '../../services/api'
+import { getPlanStatusTag, isPlanInProgress } from '../../constants/planStatus'
 
 const Home = () => {
   const navigate = useNavigate()
@@ -23,13 +24,13 @@ const Home = () => {
       const [materialsRes, plansRes, checkinsRes] = await Promise.all([
         materialApi.list(),
         planApi.list(),
-        checkinApi.list(),
+        checkinApi.listMy(),
       ])
-      setMaterials(materialsRes.data || [])
+      setMaterials(materialsRes.data?.records || [])
       setPlans(plansRes.data || [])
       setCheckins(checkinsRes.data || [])
-    } catch (error) {
-      message.error('获取数据失败')
+    } catch {
+      // 错误已由 request 拦截器提示
     } finally {
       setLoading(false)
     }
@@ -38,19 +39,6 @@ const Home = () => {
   useEffect(() => {
     fetchData()
   }, [])
-
-  const getStatusTag = (status: number) => {
-    switch (status) {
-      case 0:
-        return <Tag color="blue">进行中</Tag>
-      case 1:
-        return <Tag color="green">已完成</Tag>
-      case 2:
-        return <Tag color="red">已暂停</Tag>
-      default:
-        return <Tag>未知</Tag>
-    }
-  }
 
   return (
     <div>
@@ -89,7 +77,7 @@ const Home = () => {
           <Card>
             <Statistic
               title="进行中计划"
-              value={plans.filter(p => p.status === 0).length}
+              value={plans.filter((p) => isPlanInProgress(p.status)).length}
               prefix={<BookOutlined />}
               valueStyle={{ color: '#fa8c16' }}
             />
@@ -116,7 +104,7 @@ const Home = () => {
                     title={
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <span>{item.title}</span>
-                        {getStatusTag(item.status)}
+                        {getPlanStatusTag(item.status)}
                       </div>
                     }
                     description={`${item.startDate} 至 ${item.endDate}`}

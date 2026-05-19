@@ -1,6 +1,7 @@
 com/ai/learning/dto/UserLoginDTO.class
 com/ai/learning/mapper/StudyPlanMapper.class
 com/ai/learning/dto/StudyCheckinDTO.class
+com/ai/learning/utils/PasswordGenerator.class
 com/ai/learning/dto/StudyMaterialUploadDTO.class
 com/ai/learning/vo/StudyPlanVO.class
 com/ai/learning/common/ResultCode.class

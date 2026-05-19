@@ -54,7 +54,10 @@ public class StudyMaterialController {
     @PostMapping("/file/upload")
     public Result<String> uploadFile(@RequestParam("file") MultipartFile file) throws Exception {
         String originalFilename = file.getOriginalFilename();
-        String suffix = originalFilename != null ? originalFilename.substring(originalFilename.lastIndexOf(".")) : "";
+        String suffix = "";
+        if (originalFilename != null && originalFilename.contains(".")) {
+            suffix = originalFilename.substring(originalFilename.lastIndexOf("."));
+        }
         String fileName = IdUtil.simpleUUID() + suffix;
         minioUtil.uploadFile(file, fileName);
         return Result.success("文件上传成功", fileName);

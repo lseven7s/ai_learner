@@ -27,6 +27,7 @@ public class StudyPlanServiceImpl implements StudyPlanService {
 
     @Override
     public Long createStudyPlan(Long userId, StudyPlanCreateDTO dto) {
+        validateDateRange(dto.getStartDate(), dto.getEndDate());
         StudyPlan studyPlan = new StudyPlan();
         BeanUtil.copyProperties(dto, studyPlan);
         studyPlan.setUserId(userId);
@@ -56,6 +57,9 @@ public class StudyPlanServiceImpl implements StudyPlanService {
     @Override
     public void updateStudyPlan(Long userId, StudyPlanUpdateDTO dto) {
         StudyPlan studyPlan = getStudyPlanByIdAndUserId(userId, dto.getId());
+        if (dto.getStartDate() != null && dto.getEndDate() != null) {
+            validateDateRange(dto.getStartDate(), dto.getEndDate());
+        }
         BeanUtil.copyProperties(dto, studyPlan, "id", "userId", "createTime");
         studyPlanMapper.updateById(studyPlan);
     }
@@ -73,7 +77,8 @@ public class StudyPlanServiceImpl implements StudyPlanService {
         studyPlan.setTitle(dto.getGoal() + "学习计划");
         studyPlan.setDescription("基于AI生成的学习计划：" + dto.getGoal());
         studyPlan.setStartDate(LocalDate.now());
-        studyPlan.setEndDate(LocalDate.now().plusDays(30));
+        int days = parseDurationDays(dto.getDuration());
+        studyPlan.setEndDate(LocalDate.now().plusDays(days));
         studyPlan.setDailyGoal("每天学习2小时");
         
         String aiGeneratedContent = aiModelService.generateStudyPlanContent(dto);
@@ -100,5 +105,20 @@ public class StudyPlanServiceImpl implements StudyPlanService {
         StudyPlanVO vo = new StudyPlanVO();
         BeanUtil.copyProperties(studyPlan, vo);
         return vo;
+    }
+
+    private void validateDateRange(LocalDate startDate, LocalDate endDate) {
+        if (startDate != null && endDate != null && endDate.isBefore(startDate)) {
+            throw new BusinessException("结束日期不能早于开始日期");
+        }
+    }
+
+    private int parseDurationDays(String duration) {
+        try {
+            int days = Integer.parseInt(duration.trim());
+            return Math.max(days, 1);
+        } catch (NumberFormatException e) {
+            return 30;
+        }
     }
 }

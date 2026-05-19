@@ -26,16 +26,16 @@ const { Option } = Select
 const MaterialManage = () => {
   const [materials, setMaterials] = useState<StudyMaterialVO[]>([])
   const [loading, setLoading] = useState(false)
-  const [keyword, setKeyword] = useState('')
+  const [title, setTitle] = useState('')
   const [fileType, setFileType] = useState<string | undefined>()
 
   const fetchMaterials = async () => {
     setLoading(true)
     try {
-      const res = await materialApi.list({ keyword, fileType })
-      setMaterials(res.data || [])
-    } catch (error) {
-      message.error('获取资料列表失败')
+      const res = await materialApi.list({ title: title || undefined, fileType })
+      setMaterials(res.data?.records || [])
+    } catch {
+      // 错误已由 request 拦截器提示
     } finally {
       setLoading(false)
     }
@@ -43,22 +43,19 @@ const MaterialManage = () => {
 
   useEffect(() => {
     fetchMaterials()
-  }, [keyword, fileType])
+  }, [title, fileType])
 
   const uploadProps: UploadProps = {
     name: 'file',
     showUploadList: false,
     beforeUpload: async (file) => {
-      const formData = new FormData()
-      formData.append('file', file)
-      formData.append('title', file.name)
       setLoading(true)
       try {
-        await materialApi.upload(formData)
+        await materialApi.uploadWithFile(file)
         message.success('上传成功')
         fetchMaterials()
-      } catch (error) {
-        message.error('上传失败')
+      } catch {
+        // 错误已由 request 拦截器提示
       } finally {
         setLoading(false)
       }
@@ -71,8 +68,25 @@ const MaterialManage = () => {
       await materialApi.delete(id)
       message.success('删除成功')
       fetchMaterials()
-    } catch (error) {
-      message.error('删除失败')
+    } catch {
+      // 错误已由 request 拦截器提示
+    }
+  }
+
+  const handleDownload = async (record: StudyMaterialVO) => {
+    if (!record.fileUrl) {
+      message.warning('该资料没有关联文件')
+      return
+    }
+    if (record.fileUrl.startsWith('http')) {
+      window.open(record.fileUrl)
+      return
+    }
+    try {
+      const res = await materialApi.getFileUrl(record.fileUrl)
+      window.open(res.data)
+    } catch {
+      message.error('获取下载链接失败')
     }
   }
 
@@ -89,13 +103,6 @@ const MaterialManage = () => {
       width: 120,
     },
     {
-      title: '文件大小',
-      dataIndex: 'fileSize',
-      key: 'fileSize',
-      width: 120,
-      render: (size: number) => `${(size / 1024).toFixed(2)} KB`,
-    },
-    {
       title: '上传时间',
       dataIndex: 'createTime',
       key: 'createTime',
@@ -105,12 +112,12 @@ const MaterialManage = () => {
       title: '操作',
       key: 'action',
       width: 150,
-      render: (_: any, record: StudyMaterialVO) => (
+      render: (_: unknown, record: StudyMaterialVO) => (
         <Space size="small">
           <Button
             type="link"
             icon={<DownloadOutlined />}
-            onClick={() => window.open(record.fileUrl)}
+            onClick={() => handleDownload(record)}
           >
             下载
           </Button>
@@ -143,8 +150,8 @@ const MaterialManage = () => {
             allowClear
             style={{ width: 300 }}
             prefix={<SearchOutlined />}
-            onSearch={(value) => setKeyword(value)}
-            onChange={(e) => !e.target.value && setKeyword('')}
+            onSearch={(value) => setTitle(value)}
+            onChange={(e) => !e.target.value && setTitle('')}
           />
           <Select
             placeholder="筛选文件类型"
@@ -157,12 +164,9 @@ const MaterialManage = () => {
             <Option value="docx">DOCX</Option>
             <Option value="ppt">PPT</Option>
             <Option value="pptx">PPTX</Option>
-            <Option value="xls">XLS</Option>
-            <Option value="xlsx">XLSX</Option>
             <Option value="txt">TXT</Option>
             <Option value="image">图片</Option>
             <Option value="video">视频</Option>
-            <Option value="other">其他</Option>
           </Select>
         </Space>
 

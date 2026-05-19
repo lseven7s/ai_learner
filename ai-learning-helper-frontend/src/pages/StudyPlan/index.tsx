@@ -9,7 +9,6 @@ import {
   Space,
   Popconfirm,
   message,
-  Tag,
   Card,
   Select,
   InputNumber,
@@ -22,10 +21,10 @@ import {
   CheckCircleOutlined,
   RobotOutlined,
 } from '@ant-design/icons'
-import type { DatePickerProps } from 'antd'
 import dayjs from 'dayjs'
 import { planApi, checkinApi } from '../../services/api'
 import type { StudyPlanVO, StudyCheckinVO } from '../../services/api'
+import { getPlanStatusTag, isPlanInProgress, PLAN_STATUS } from '../../constants/planStatus'
 
 const { TextArea } = Input
 const { RangePicker } = DatePicker
@@ -49,19 +48,19 @@ const StudyPlan = () => {
     try {
       const res = await planApi.list()
       setPlans(res.data || [])
-    } catch (error) {
-      message.error('获取学习计划失败')
+    } catch {
+      // 错误已由 request 拦截器提示
     } finally {
       setLoading(false)
     }
   }
 
-  const fetchCheckins = async (planId?: number) => {
+  const fetchCheckins = async (planId: number) => {
     try {
-      const res = await checkinApi.list(planId)
+      const res = await checkinApi.listByPlan(planId)
       setCheckins(res.data || [])
-    } catch (error) {
-      message.error('获取打卡记录失败')
+    } catch {
+      // 错误已由 request 拦截器提示
     }
   }
 
@@ -91,19 +90,24 @@ const StudyPlan = () => {
       await planApi.delete(id)
       message.success('删除成功')
       fetchPlans()
-    } catch (error) {
-      message.error('删除失败')
+    } catch {
+      // 错误已由 request 拦截器提示
     }
   }
 
-  const handleSubmit = async (values: any) => {
+  const handleSubmit = async (values: {
+    title: string
+    description?: string
+    dateRange: [dayjs.Dayjs, dayjs.Dayjs]
+    status?: number
+  }) => {
     try {
       const data = {
         title: values.title,
         description: values.description,
         startDate: values.dateRange[0].format('YYYY-MM-DD'),
         endDate: values.dateRange[1].format('YYYY-MM-DD'),
-        status: values.status || 0,
+        status: values.status,
       }
       if (editingPlan) {
         await planApi.update(editingPlan.id, data)
@@ -114,8 +118,8 @@ const StudyPlan = () => {
       }
       setModalVisible(false)
       fetchPlans()
-    } catch (error) {
-      message.error(editingPlan ? '更新失败' : '创建失败')
+    } catch {
+      // 错误已由 request 拦截器提示
     }
   }
 
@@ -126,45 +130,32 @@ const StudyPlan = () => {
     setCheckinModalVisible(true)
   }
 
-  const handleSubmitCheckin = async (values: any) => {
+  const handleSubmitCheckin = async (values: { content?: string }) => {
     if (!selectedPlan) return
     try {
       await checkinApi.checkin({
         planId: selectedPlan.id,
-        content: values.content,
+        studyContent: values.content,
       })
       message.success('打卡成功')
       setCheckinModalVisible(false)
       fetchCheckins(selectedPlan.id)
-    } catch (error) {
-      message.error('打卡失败')
+    } catch {
+      // 错误已由 request 拦截器提示
     }
   }
 
-  const handleGenerate = async (values: any) => {
+  const handleGenerate = async (values: { topic: string; duration: number }) => {
     try {
-      const res = await planApi.generate({
-        topic: values.topic,
-        duration: values.duration,
+      await planApi.generate({
+        goal: values.topic,
+        duration: String(values.duration),
       })
       message.success('AI 生成成功')
       setGenerateModalVisible(false)
       fetchPlans()
-    } catch (error) {
-      message.error('AI 生成失败')
-    }
-  }
-
-  const getStatusTag = (status: number) => {
-    switch (status) {
-      case 0:
-        return <Tag color="blue">进行中</Tag>
-      case 1:
-        return <Tag color="green">已完成</Tag>
-      case 2:
-        return <Tag color="red">已暂停</Tag>
-      default:
-        return <Tag>未知</Tag>
+    } catch {
+      // 错误已由 request 拦截器提示
     }
   }
 
@@ -197,20 +188,20 @@ const StudyPlan = () => {
       dataIndex: 'status',
       key: 'status',
       width: 100,
-      render: (status: number) => getStatusTag(status),
+      render: (status: number) => getPlanStatusTag(status),
     },
     {
       title: '操作',
       key: 'action',
       width: 280,
-      render: (_: any, record: StudyPlanVO) => (
+      render: (_: unknown, record: StudyPlanVO) => (
         <Space size="small">
           <Button
             type="primary"
             size="small"
             icon={<CheckCircleOutlined />}
             onClick={() => handleCheckin(record)}
-            disabled={record.status !== 0}
+            disabled={!isPlanInProgress(record.status)}
           >
             打卡
           </Button>
@@ -291,9 +282,9 @@ const StudyPlan = () => {
           {editingPlan && (
             <Form.Item name="status" label="状态">
               <Select>
-                <Option value={0}>进行中</Option>
-                <Option value={1}>已完成</Option>
-                <Option value={2}>已暂停</Option>
+                <Option value={PLAN_STATUS.IN_PROGRESS}>进行中</Option>
+                <Option value={PLAN_STATUS.COMPLETED}>已完成</Option>
+                <Option value={PLAN_STATUS.CANCELLED}>已取消</Option>
               </Select>
             </Form.Item>
           )}
@@ -324,7 +315,7 @@ const StudyPlan = () => {
               <List.Item>
                 <List.Item.Meta
                   title={item.checkinDate}
-                  description={item.content}
+                  description={item.studyContent}
                 />
               </List.Item>
             )}

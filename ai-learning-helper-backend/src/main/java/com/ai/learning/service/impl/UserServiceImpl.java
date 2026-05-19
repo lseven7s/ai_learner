@@ -31,9 +31,16 @@ public class UserServiceImpl implements UserService {
 
         LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(User::getUsername, userRegisterDTO.getUsername());
-        User existUser = userMapper.selectOne(queryWrapper);
-        if (existUser != null) {
+        if (userMapper.selectCount(queryWrapper) > 0) {
             throw new BusinessException("用户名已存在");
+        }
+
+        if (userRegisterDTO.getEmail() != null && !userRegisterDTO.getEmail().isBlank()) {
+            LambdaQueryWrapper<User> emailWrapper = new LambdaQueryWrapper<>();
+            emailWrapper.eq(User::getEmail, userRegisterDTO.getEmail());
+            if (userMapper.selectCount(emailWrapper) > 0) {
+                throw new BusinessException("邮箱已被注册");
+            }
         }
 
         User user = new User();
@@ -60,7 +67,7 @@ public class UserServiceImpl implements UserService {
             throw new BusinessException("用户名或密码错误");
         }
 
-        if (user.getStatus() != 1) {
+        if (!Integer.valueOf(1).equals(user.getStatus())) {
             throw new BusinessException("账号已被禁用");
         }
 
@@ -96,6 +103,12 @@ public class UserServiceImpl implements UserService {
             user.setAvatar(userUpdateDTO.getAvatar());
         }
         if (userUpdateDTO.getEmail() != null) {
+            LambdaQueryWrapper<User> emailWrapper = new LambdaQueryWrapper<>();
+            emailWrapper.eq(User::getEmail, userUpdateDTO.getEmail());
+            emailWrapper.ne(User::getId, userId);
+            if (userMapper.selectCount(emailWrapper) > 0) {
+                throw new BusinessException("邮箱已被使用");
+            }
             user.setEmail(userUpdateDTO.getEmail());
         }
         if (userUpdateDTO.getPhone() != null) {

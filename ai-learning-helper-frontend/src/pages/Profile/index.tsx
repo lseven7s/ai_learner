@@ -13,8 +13,6 @@ import {
 import { UserOutlined } from '@ant-design/icons'
 import { userApi } from '../../services/api'
 import { useUserStore } from '../../store'
-import type { UserVO } from '../../services/api'
-
 const Profile = () => {
   const [form] = Form.useForm()
   const { userInfo, setUserInfo } = useUserStore()
@@ -28,8 +26,8 @@ const Profile = () => {
         nickname: res.data.nickname,
         email: res.data.email,
       })
-    } catch (error) {
-      message.error('获取用户信息失败')
+    } catch {
+      // 错误已由 request 拦截器提示
     }
   }
 
@@ -43,8 +41,8 @@ const Profile = () => {
       await userApi.updateUser(values)
       message.success('更新成功')
       fetchUserInfo()
-    } catch (error) {
-      message.error('更新失败')
+    } catch {
+      // 错误已由 request 拦截器提示
     } finally {
       setLoading(false)
     }

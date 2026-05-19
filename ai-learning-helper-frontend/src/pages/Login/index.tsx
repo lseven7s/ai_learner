@@ -27,7 +27,12 @@ const Login = () => {
     }
   }
 
-  const handleRegister = async (values: { username: string; password: string; nickname?: string }) => {
+  const handleRegister = async (values: {
+    username: string
+    password: string
+    confirmPassword: string
+    nickname?: string
+  }) => {
     setLoading(true)
     try {
       await userApi.register(values)

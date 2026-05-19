@@ -2,8 +2,8 @@ import axios from 'axios'
 import { message } from 'antd'
 
 const request = axios.create({
-  baseURL: 'http://localhost:8080/api',
-  timeout: 10000,
+  baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
+  timeout: 30000,
 })
 
 request.interceptors.request.use(
@@ -14,15 +14,13 @@ request.interceptors.request.use(
     }
     return config
   },
-  (error) => {
-    return Promise.reject(error)
-  }
+  (error) => Promise.reject(error)
 )
 
 request.interceptors.response.use(
   (response) => {
     const res = response.data
-    if (res.code !== 0) {
+    if (res.code !== 200) {
       message.error(res.message || '请求失败')
       if (res.code === 401) {
         localStorage.removeItem('token')
@@ -34,12 +32,14 @@ request.interceptors.response.use(
     return res
   },
   (error) => {
+    const msg =
+      error.response?.data?.message || error.message || '网络错误'
+    message.error(msg)
     if (error.response?.status === 401) {
       localStorage.removeItem('token')
       localStorage.removeItem('user-storage')
       window.location.href = '/login'
     }
-    message.error(error.message || '网络错误')
     return Promise.reject(error)
   }
 )

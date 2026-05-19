@@ -2,18 +2,19 @@ package com.ai.learning.service;
 
 import com.ai.learning.dto.StudyCheckinDTO;
 import com.ai.learning.vo.StudyCheckinVO;
+
 import java.util.List;
 
 public interface StudyCheckinService {
-    StudyCheckinVO create(StudyCheckinDTO dto);
+    StudyCheckinVO create(Long userId, StudyCheckinDTO dto);
 
-    StudyCheckinVO update(StudyCheckinDTO dto);
+    StudyCheckinVO update(Long userId, StudyCheckinDTO dto);
 
-    void delete(Long id);
+    void delete(Long userId, Long id);
 
-    StudyCheckinVO getById(Long id);
+    StudyCheckinVO getById(Long userId, Long id);
 
     List<StudyCheckinVO> getByUserId(Long userId);
 
-    List<StudyCheckinVO> getByPlanId(Long planId);
+    List<StudyCheckinVO> getByPlanId(Long userId, Long planId);
 }

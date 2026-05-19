@@ -38,6 +38,15 @@ function App() {
       icon: <UserOutlined />,
       label: '个人中心',
     },
+    {
+      type: 'divider' as const,
+    },
+    {
+      key: 'logout',
+      icon: <LogoutOutlined />,
+      label: '退出登录',
+      danger: true,
+    },
   ]
 
   const handleMenuClick = ({ key }: { key: string }) => {
@@ -71,15 +80,6 @@ function App() {
           items={menuItems}
           onClick={handleMenuClick}
         />
-        <div style={{ position: 'absolute', bottom: 20, left: 0, right: 0, padding: '0 24px' }}>
-          <Menu.Item
-            key="logout"
-            icon={<LogoutOutlined />}
-            onClick={handleMenuClick}
-          >
-            退出登录
-          </Menu.Item>
-        </div>
       </Sider>
       <Layout style={{ marginLeft: 200 }}>
         <Header style={{ padding: '0 24px', background: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

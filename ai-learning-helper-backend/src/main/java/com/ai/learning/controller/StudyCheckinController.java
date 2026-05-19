@@ -4,52 +4,59 @@ import com.ai.learning.common.Result;
 import com.ai.learning.dto.StudyCheckinDTO;
 import com.ai.learning.service.StudyCheckinService;
 import com.ai.learning.vo.StudyCheckinVO;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/study-checkins")
+@RequiredArgsConstructor
 public class StudyCheckinController {
 
-    @Autowired
-    private StudyCheckinService studyCheckinService;
+    private final StudyCheckinService studyCheckinService;
 
     @PostMapping
-    public Result<StudyCheckinVO> create(@Valid @RequestBody StudyCheckinDTO dto) {
-        StudyCheckinVO vo = studyCheckinService.create(dto);
+    public Result<StudyCheckinVO> create(@Valid @RequestBody StudyCheckinDTO dto, HttpServletRequest request) {
+        Long userId = (Long) request.getAttribute("userId");
+        StudyCheckinVO vo = studyCheckinService.create(userId, dto);
         return Result.success(vo);
     }
 
     @PutMapping
-    public Result<StudyCheckinVO> update(@Valid @RequestBody StudyCheckinDTO dto) {
-        StudyCheckinVO vo = studyCheckinService.update(dto);
+    public Result<StudyCheckinVO> update(@Valid @RequestBody StudyCheckinDTO dto, HttpServletRequest request) {
+        Long userId = (Long) request.getAttribute("userId");
+        StudyCheckinVO vo = studyCheckinService.update(userId, dto);
         return Result.success(vo);
     }
 
     @DeleteMapping("/{id}")
-    public Result<Void> delete(@PathVariable Long id) {
-        studyCheckinService.delete(id);
+    public Result<Void> delete(@PathVariable Long id, HttpServletRequest request) {
+        Long userId = (Long) request.getAttribute("userId");
+        studyCheckinService.delete(userId, id);
         return Result.success();
     }
 
     @GetMapping("/{id}")
-    public Result<StudyCheckinVO> getById(@PathVariable Long id) {
-        StudyCheckinVO vo = studyCheckinService.getById(id);
+    public Result<StudyCheckinVO> getById(@PathVariable Long id, HttpServletRequest request) {
+        Long userId = (Long) request.getAttribute("userId");
+        StudyCheckinVO vo = studyCheckinService.getById(userId, id);
         return Result.success(vo);
     }
 
-    @GetMapping("/user/{userId}")
-    public Result<List<StudyCheckinVO>> getByUserId(@PathVariable Long userId) {
+    @GetMapping("/me")
+    public Result<List<StudyCheckinVO>> getMyCheckins(HttpServletRequest request) {
+        Long userId = (Long) request.getAttribute("userId");
         List<StudyCheckinVO> list = studyCheckinService.getByUserId(userId);
         return Result.success(list);
     }
 
     @GetMapping("/plan/{planId}")
-    public Result<List<StudyCheckinVO>> getByPlanId(@PathVariable Long planId) {
-        List<StudyCheckinVO> list = studyCheckinService.getByPlanId(planId);
+    public Result<List<StudyCheckinVO>> getByPlanId(@PathVariable Long planId, HttpServletRequest request) {
+        Long userId = (Long) request.getAttribute("userId");
+        List<StudyCheckinVO> list = studyCheckinService.getByPlanId(userId, planId);
         return Result.success(list);
     }
 }

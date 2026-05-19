@@ -47,6 +47,7 @@
 /Users/fightingatm/Downloads/ai_learner/ai-learning-helper-backend/src/main/java/com/ai/learning/service/impl/StudyMaterialServiceImpl.java
 /Users/fightingatm/Downloads/ai_learner/ai-learning-helper-backend/src/main/java/com/ai/learning/mapper/UserMapper.java
 /Users/fightingatm/Downloads/ai_learner/ai-learning-helper-backend/src/main/java/com/ai/learning/vo/UserVO.java
+/Users/fightingatm/Downloads/ai_learner/ai-learning-helper-backend/src/main/java/com/ai/learning/utils/PasswordGenerator.java
 /Users/fightingatm/Downloads/ai_learner/ai-learning-helper-backend/src/main/java/com/ai/learning/service/impl/AiModelServiceImpl.java
 /Users/fightingatm/Downloads/ai_learner/ai-learning-helper-backend/src/main/java/com/ai/learning/service/impl/StudyPlanServiceImpl.java
 /Users/fightingatm/Downloads/ai_learner/ai-learning-helper-backend/src/main/java/com/ai/learning/dto/StudyReminderDTO.java

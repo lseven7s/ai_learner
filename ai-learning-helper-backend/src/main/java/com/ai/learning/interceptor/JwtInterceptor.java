@@ -19,26 +19,30 @@ public class JwtInterceptor implements HandlerInterceptor {
     private final JwtUtil jwtUtil;
 
     @Override
-    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            return true;
+        }
+
         String token = request.getHeader(JwtUtil.TOKEN_HEADER);
-        
+
         if (!StringUtils.hasText(token)) {
             throw new BusinessException(ResultCode.UNAUTHORIZED, "未登录，请先登录");
         }
-        
+
         if (token.startsWith(JwtUtil.TOKEN_PREFIX)) {
             token = token.substring(JwtUtil.TOKEN_PREFIX.length());
         }
-        
+
         if (!jwtUtil.validateToken(token)) {
             throw new BusinessException(ResultCode.UNAUTHORIZED, "token无效或已过期，请重新登录");
         }
-        
+
         Long userId = jwtUtil.getUserIdFromToken(token);
         String username = jwtUtil.getUsernameFromToken(token);
         request.setAttribute("userId", userId);
         request.setAttribute("username", username);
-        
+
         return true;
     }
 }

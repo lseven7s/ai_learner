@@ -15,12 +15,23 @@ export const useUserStore = create<UserStore>()(
     (set) => ({
       token: null,
       userInfo: null,
-      setToken: (token) => set({ token }),
+      setToken: (token) => {
+        localStorage.setItem('token', token)
+        set({ token })
+      },
       setUserInfo: (userInfo) => set({ userInfo }),
-      logout: () => set({ token: null, userInfo: null }),
+      logout: () => {
+        localStorage.removeItem('token')
+        set({ token: null, userInfo: null })
+      },
     }),
     {
       name: 'user-storage',
+      onRehydrateStorage: () => (state) => {
+        if (state?.token) {
+          localStorage.setItem('token', state.token)
+        }
+      },
     }
   )
 )
